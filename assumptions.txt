@@ -1,0 +1,1 @@
+* Storage Account Replication Type: no information provided, so the simplest, cheapest method is chosen (Local Redundant Storage).
