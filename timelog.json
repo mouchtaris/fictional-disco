@@ -1,0 +1,120 @@
+{
+  "000.": {
+    "activity": "Analyse_Assignment",
+    "start_time": "2018-07-12T11:52:35+00:00",
+    "end_time": "2018-07-12T11:53:44+00:00",
+    "duration": 69.0
+  },
+  "001.": {
+    "activity": "Sign_up_for_azure_free",
+    "start_time": "2018-07-12T11:53:56+00:00",
+    "end_time": "2018-07-12T12:06:06+00:00",
+    "duration": 730.0
+  },
+  "002.": {
+    "activity": "research_azure_resource_groups",
+    "start_time": "2018-07-12T12:06:17+00:00",
+    "end_time": "2018-07-12T12:09:32+00:00",
+    "duration": 195.0
+  },
+  "003.": {
+    "activity": "azure_web_interface_tour",
+    "start_time": "2018-07-12T12:09:43+00:00",
+    "end_time": "2018-07-12T12:10:21+00:00",
+    "duration": 38.0
+  },
+  "004.": {
+    "activity": "research_azure_resource_groups",
+    "start_time": "2018-07-12T12:10:26+00:00",
+    "end_time": "2018-07-12T12:15:59+00:00",
+    "duration": 333.0
+  },
+  "005.": {
+    "activity": "brush_up_terraform",
+    "start_time": "2018-07-12T12:16:08+00:00",
+    "end_time": "2018-07-12T12:27:02+00:00",
+    "duration": 654.0
+  },
+  "006.001.": {
+    "activity": "install_powershell_for_linux",
+    "start_time": "2018-07-12T12:33:19+00:00",
+    "end_time": "2018-07-12T13:34:10+00:00",
+    "duration": 3651.0
+  },
+  "006.002.": {
+    "activity": "install_azure_cli_for_linux",
+    "start_time": "2018-07-12T13:36:09+00:00",
+    "end_time": "2018-07-12T13:49:47+00:00",
+    "duration": 818.0
+  },
+  "006.": {
+    "activity": "set_up_azure_provider__get_credentials",
+    "start_time": "2018-07-12T12:28:33+00:00"
+  },
+  "007.": {
+    "activity": "create_resource_group",
+    "start_time": "2018-07-12T15:26:52+00:00",
+    "end_time": "2018-07-12T16:48:33+00:00",
+    "duration": 4901.0
+  },
+  "008.": {
+    "activity": "create_storage_account",
+    "start_time": "2018-07-12T16:48:35+00:00",
+    "end_time": "2018-07-12T17:27:12+00:00",
+    "duration": 2317.0
+  },
+  "009.": {
+    "activity": "setup_github_repository",
+    "start_time": "2018-07-12T17:28:34+00:00",
+    "end_time": "2018-07-12T17:30:22+00:00",
+    "duration": 108.0
+  },
+  "010.": {
+    "activity": "setup_virtual_network",
+    "start_time": "2018-07-12T17:53:05+00:00",
+    "end_time": "2018-07-12T18:14:55+00:00",
+    "duration": 1310.0
+  },
+  "011.": {
+    "activity": "refactor__parameterize",
+    "start_time": "2018-07-12T19:44:54+00:00",
+    "end_time": "2018-07-12T20:07:16+00:00",
+    "duration": 1342.0
+  },
+  "012.": {
+    "activity": "fix_subnet_template",
+    "start_time": "2018-07-13T06:14:11+00:00",
+    "end_time": "2018-07-13T06:21:56+00:00",
+    "duration": 465.0
+  },
+  "013.": {
+    "activity": "apply_release_tags_to_git",
+    "start_time": "2018-07-13T06:23:50+00:00",
+    "end_time": "2018-07-13T06:28:17+00:00",
+    "duration": 267.0
+  },
+  "014.": {
+    "activity": "apply_tags_to_resource_group",
+    "start_time": "2018-07-13T06:35:05+00:00",
+    "end_time": "2018-07-13T07:09:50+00:00",
+    "duration": 2085.0
+  },
+  "015.": {
+    "activity": "research_azure_policies",
+    "start_time": "2018-07-13T08:35:06+00:00",
+    "end_time": "2018-07-13T10:11:23+00:00",
+    "duration": 5777.0
+  },
+  "016.": {
+    "activity": "add_resource_restriction_policy",
+    "start_time": "2018-07-13T11:21:01+00:00",
+    "end_time": "2018-07-13T14:26:58+00:00",
+    "duration": 11157.0
+  },
+  "017.": {
+    "activity": "generate_timelog",
+    "start_time": "2018-07-13T14:27:42+00:00",
+    "end_time": "2018-07-13T15:14:17+00:00",
+    "duration": 2795.0
+  }
+}

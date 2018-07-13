@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'date'
+require 'pathname'
+require 'hashie'
+require 'json'
+
+accum = {}
+root = Pathname('timelog')
+
+root
+  .find
+  .map { |p| p.relative_path_from root }
+  .map(&:to_s)
+  .map { |t| /^((\d{3}\.)+)(.*)_(.*)/.match t }
+  .select(&:itself)
+  .map { |md| [ md[1], md[3], md[4] ] }
+  .map { |id, activity, time| [ id, activity, DateTime.parse(time) ] }
+  .each { |id, activity, time|
+    prev = accum[id]
+    if prev
+      raise "Inconsistent log #{id}: #{prev.activity} != #{activity}" if prev.activity != activity
+      dur = time.to_time - prev.start_time.to_time
+      prev.end_time = time
+      prev.duration = dur
+    else
+      accum[id] = Hashie::Mash.new(activity: activity, start_time: time)
+    end
+  }
+
+$>.puts JSON.pretty_generate(accum)
