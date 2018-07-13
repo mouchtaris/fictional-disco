@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby 
+
+require 'bundler/setup'
+require 'hashie'
+require 'json'
+require 'pp'
+
+def load_db(path)
+  JSON
+    .parse(File.read(path))
+    .map(&Hashie::Mash.method(:new))
+end
+
+Policies = load_db 'azure.db/builtin_policies.json'
+Resources = load_db 'azure.db/resource_providers.json'
+Mode = ARGV.shift
+
+class PolicyMan
+  RESTRICT_RESOURCE_TYPE_ID = '/providers/Microsoft.Authorization/policyDefinitions/a08ec900-254a-4555-9bf5-e42af04b5c5c'
+
+  def initialize(policies)
+    @policies = policies.dup.freeze
+  end
+
+  def restrict_resource_type
+    @policies.find do |pol|
+      pol.id == RESTRICT_RESOURCE_TYPE_ID
+    end
+  end
+end
+
+class ResourceMan
+  Resource = Struct.new(:ns, :name, :aliases)
+
+  def initialize(resources)
+    @resources = resources.dup.freeze
+  end
+
+  def each_resource
+    @resources.each do |rc|
+      ns = rc.namespace
+      rc.resourceTypes.each do |rc_type|
+        name = rc_type.resourceType
+        aliases = rc_type.aliases
+        yield Resource.new(ns, name, aliases)
+      end
+    end
+  end
+end
+
+Modes = Hashie::Mash.new(
+  show_restrict_resource_policy: lambda do 
+    pp PolicyMan.new(Policies).restrict_resource_type
+  end,
+  list_resource_types: lambda do
+    ResourceMan.new(Resources).each_resource do |rc|
+      puts "#{rc.ns}/#{rc.name}"
+    end
+  end
+)
+
+mode = Modes[Mode]
+if mode
+  mode.call()
+else
+  pp Modes.keys
+end

@@ -1,0 +1,2539 @@
+[
+  {
+    "description": "Audit DB level audit setting for SQL databases",
+    "displayName": "Audit SQL DB Level Audit Setting",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/06a78e20-9358-41c9-923c-fb736d382a12",
+    "metadata": {
+      "category": "SQL",
+      "deprecated": true
+    },
+    "mode": "All",
+    "name": "06a78e20-9358-41c9-923c-fb736d382a12",
+    "parameters": {
+      "setting": {
+        "allowedValues": [
+          "enabled",
+          "disabled"
+        ],
+        "metadata": {
+          "displayName": "Audit Setting"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Sql/servers/databases",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "[parameters('setting')]",
+                "field": "Microsoft.Sql/auditingSettings.state"
+              }
+            ]
+          },
+          "name": "default",
+          "type": "Microsoft.Sql/servers/databases/auditingSettings"
+        },
+        "effect": "AuditIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy audits VMs that do not use managed disks",
+    "displayName": "Audit VMs that do not use managed disks",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/06a78e20-9358-41c9-923c-fb736d382a4d",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": "All",
+    "name": "06a78e20-9358-41c9-923c-fb736d382a4d",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "equals": "Microsoft.Compute/virtualMachines",
+                "field": "type"
+              },
+              {
+                "exists": "True",
+                "field": "Microsoft.Compute/virtualMachines/osDisk.uri"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "equals": "Microsoft.Compute/VirtualMachineScaleSets",
+                "field": "type"
+              },
+              {
+                "anyOf": [
+                  {
+                    "exists": "True",
+                    "field": "Microsoft.Compute/VirtualMachineScaleSets/osDisk.vhdContainers"
+                  },
+                  {
+                    "exists": "True",
+                    "field": "Microsoft.Compute/VirtualMachineScaleSets/osdisk.imageUrl"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "audit"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy deploys OMS VM Extensions on Windows VMs, and connects to the selected Log Analytics workspace",
+    "displayName": "[Preview]: Deploy default OMS VM Extension for Windows VMs.",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/0868462e-646c-4fe3-9ced-a733534b6a2c",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": "NotSpecified",
+    "name": "0868462e-646c-4fe3-9ced-a733534b6a2c",
+    "parameters": {
+      "logAnalytics": {
+        "metadata": {
+          "description": "Select Log Analytics workspace from dropdown list",
+          "displayName": "Log Analytics workspace",
+          "strongType": "omsWorkspace"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Compute/virtualMachines",
+            "field": "type"
+          },
+          {
+            "equals": "MicrosoftWindowsServer",
+            "field": "Microsoft.Compute/imagePublisher"
+          },
+          {
+            "equals": "WindowsServer",
+            "field": "Microsoft.Compute/imageOffer"
+          },
+          {
+            "field": "Microsoft.Compute/imageSKU",
+            "in": [
+              "2008-R2-SP1",
+              "2008-R2-SP1-smalldisk",
+              "2012-Datacenter",
+              "2012-Datacenter-smalldisk",
+              "2012-R2-Datacenter",
+              "2012-R2-Datacenter-smalldisk",
+              "2016-Datacenter",
+              "2016-Datacenter-Server-Core",
+              "2016-Datacenter-Server-Core-smalldisk",
+              "2016-Datacenter-smalldisk",
+              "2016-Datacenter-with-Containers",
+              "2016-Datacenter-with-RDSH"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "location": {
+                  "value": "[field('location')]"
+                },
+                "logAnalytics": {
+                  "value": "[parameters('logAnalytics')]"
+                },
+                "vmName": {
+                  "value": "[field('name')]"
+                }
+              },
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "outputs": {
+                  "policy": {
+                    "type": "string",
+                    "value": "[concat('Enabled monitoring for Windows VM', ': ', parameters('vmName'))]"
+                  }
+                },
+                "parameters": {
+                  "location": {
+                    "type": "string"
+                  },
+                  "logAnalytics": {
+                    "type": "string"
+                  },
+                  "vmName": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2017-12-01",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'),'/omsPolicy')]",
+                    "properties": {
+                      "autoUpgradeMinorVersion": true,
+                      "protectedSettings": {
+                        "workspaceKey": "[listKeys(parameters('logAnalytics'), '2015-03-20').primarySharedKey]"
+                      },
+                      "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                      "settings": {
+                        "workspaceId": "[reference(parameters('logAnalytics'), '2015-03-20').customerId]"
+                      },
+                      "type": "MicrosoftMonitoringAgent",
+                      "typeHandlerVersion": "1.0"
+                    },
+                    "type": "Microsoft.Compute/virtualMachines/extensions"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "MicrosoftMonitoringAgent",
+                "field": "Microsoft.Compute/virtualMachines/extensions/type"
+              },
+              {
+                "equals": "Microsoft.EnterpriseCloud.Monitoring",
+                "field": "Microsoft.Compute/virtualMachines/extensions/publisher"
+              }
+            ]
+          },
+          "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        "effect": "deployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "VMs without an enabled disk encryption will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor unencrypted VM Disks in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/0961003e-5a0a-4549-abde-af6a37f2724d",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "0961003e-5a0a-4549-abde-af6a37f2724d",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Compute/virtualMachines",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "encryption",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Audit that the resource location matches its resource group location",
+    "displayName": "Audit resource location matches resource group location",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/0a914e76-4921-4c19-b460-a2d36003525a",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": "Indexed",
+    "name": "0a914e76-4921-4c19-b460-a2d36003525a",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "field": "location",
+        "notIn": [
+          "[resourcegroup().location]",
+          "global"
+        ]
+      },
+      "then": {
+        "effect": "audit"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Audit transparent data encryption status for SQL databases",
+    "displayName": "Audit transparent data encryption status",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/17k78e20-9358-41c9-923c-fb736d382a12",
+    "metadata": {
+      "category": "SQL"
+    },
+    "mode": "Indexed",
+    "name": "17k78e20-9358-41c9-923c-fb736d382a12",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Sql/servers/databases",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "enabled",
+                "field": "Microsoft.Sql/transparentDataEncryption.status"
+              }
+            ]
+          },
+          "name": "current",
+          "type": "Microsoft.Sql/servers/databases/transparentDataEncryption"
+        },
+        "effect": "AuditIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Enforces a required tag and its value. Does not apply to resource groups.",
+    "displayName": "Enforce tag and its value",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/1e30110a-5ceb-460c-a204-c1c3969c6d62",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": null,
+    "name": "1e30110a-5ceb-460c-a204-c1c3969c6d62",
+    "parameters": {
+      "tagName": {
+        "metadata": {
+          "description": "Name of the tag, such as 'environment'",
+          "displayName": "Tag Name"
+        },
+        "type": "String"
+      },
+      "tagValue": {
+        "metadata": {
+          "description": "Value of the tag, such as 'production'",
+          "displayName": "Tag Value"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "not": {
+          "equals": "[parameters('tagValue')]",
+          "field": "[concat('tags[', parameters('tagName'), ']')]"
+        }
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Web applications without a Web Application Firewall protection will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor unprotected web application in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/201ea587-7c90-41c3-910f-c280ae01cfd6",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "201ea587-7c90-41c3-910f-c280ae01cfd6",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Network/publicIPAddresses",
+          "Microsoft.ClassicCompute/domainNames",
+          "Microsoft.Web/hostingEnvironments"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "unprotectedWebApplication",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy deploys a Microsoft IaaSAntimalware extension with a default configuraion when a VM is not configured with the antimalware extension.",
+    "displayName": "[Preview]: Deploy default Microsoft IaaSAntimalware extension for Windows Server",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/2835b622-407b-4114-9198-6f7064cbe0dc",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": "Indexed",
+    "name": "2835b622-407b-4114-9198-6f7064cbe0dc",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Compute/virtualMachines",
+            "field": "type"
+          },
+          {
+            "equals": "MicrosoftWindowsServer",
+            "field": "Microsoft.Compute/imagePublisher"
+          },
+          {
+            "equals": "WindowsServer",
+            "field": "Microsoft.Compute/imageOffer"
+          },
+          {
+            "field": "Microsoft.Compute/imageSKU",
+            "in": [
+              "2008-R2-SP1",
+              "2008-R2-SP1-smalldisk",
+              "2012-Datacenter",
+              "2012-Datacenter-smalldisk",
+              "2012-R2-Datacenter",
+              "2012-R2-Datacenter-smalldisk",
+              "2016-Datacenter",
+              "2016-Datacenter-Server-Core",
+              "2016-Datacenter-Server-Core-smalldisk",
+              "2016-Datacenter-smalldisk",
+              "2016-Datacenter-with-Containers",
+              "2016-Datacenter-with-RDSH"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "RealtimeProtectionEnabled": {
+                  "value": "true"
+                },
+                "ScheduledScanSettingsIsEnabled": {
+                  "value": "true"
+                },
+                "location": {
+                  "value": "[field('location')]"
+                },
+                "vmName": {
+                  "value": "[field('name')]"
+                }
+              },
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                  "ExclusionsExtensions": {
+                    "defaultValue": "",
+                    "metadata": {
+                      "description": "Semicolon delimited list of file extensions to exclude from scanning"
+                    },
+                    "type": "string"
+                  },
+                  "ExclusionsPaths": {
+                    "defaultValue": "",
+                    "metadata": {
+                      "description": "Semicolon delimited list of file paths or locations to exclude from scanning"
+                    },
+                    "type": "string"
+                  },
+                  "ExclusionsProcesses": {
+                    "defaultValue": "",
+                    "metadata": {
+                      "description": "Semicolon delimited list of process names to exclude from scanning"
+                    },
+                    "type": "string"
+                  },
+                  "RealtimeProtectionEnabled": {
+                    "defaultValue": "true",
+                    "metadata": {
+                      "description": "Indicates whether or not real time protection is enabled (default is true)"
+                    },
+                    "type": "string"
+                  },
+                  "ScheduledScanSettingsDay": {
+                    "defaultValue": "7",
+                    "metadata": {
+                      "description": "Day of the week for scheduled scan (1-Sunday, 2-Monday, ..., 7-Saturday)"
+                    },
+                    "type": "string"
+                  },
+                  "ScheduledScanSettingsIsEnabled": {
+                    "defaultValue": "false",
+                    "metadata": {
+                      "description": "Indicates whether or not custom scheduled scan settings are enabled (default is false)"
+                    },
+                    "type": "string"
+                  },
+                  "ScheduledScanSettingsScanType": {
+                    "defaultValue": "Quick",
+                    "metadata": {
+                      "description": "Indicates whether scheduled scan setting type is set to Quick or Full (default is Quick)"
+                    },
+                    "type": "string"
+                  },
+                  "ScheduledScanSettingsTime": {
+                    "defaultValue": "120",
+                    "metadata": {
+                      "description": "When to perform the scheduled scan, measured in minutes from midnight (0-1440). For example: 0 = 12AM, 60 = 1AM, 120 = 2AM."
+                    },
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "vmName": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2017-12-01",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'),'/IaaSAntimalware')]",
+                    "properties": {
+                      "autoUpgradeMinorVersion": true,
+                      "publisher": "Microsoft.Azure.Security",
+                      "settings": {
+                        "AntimalwareEnabled": true,
+                        "Exclusions": {
+                          "Extensions": "[parameters('ExclusionsExtensions')]",
+                          "Paths": "[parameters('ExclusionsPaths')]",
+                          "Processes": "[parameters('ExclusionsProcesses')]"
+                        },
+                        "RealtimeProtectionEnabled": "[parameters('RealtimeProtectionEnabled')]",
+                        "ScheduledScanSettings": {
+                          "day": "[parameters('ScheduledScanSettingsDay')]",
+                          "isEnabled": "[parameters('ScheduledScanSettingsIsEnabled')]",
+                          "scanType": "[parameters('ScheduledScanSettingsScanType')]",
+                          "time": "[parameters('ScheduledScanSettingsTime')]"
+                        }
+                      },
+                      "type": "IaaSAntimalware",
+                      "typeHandlerVersion": "1.3"
+                    },
+                    "type": "Microsoft.Compute/virtualMachines/extensions"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "IaaSAntimalware",
+                "field": "Microsoft.Compute/virtualMachines/extensions/type"
+              },
+              {
+                "equals": "Microsoft.Azure.Security",
+                "field": "Microsoft.Compute/virtualMachines/extensions/publisher"
+              }
+            ]
+          },
+          "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        "effect": "deployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Applies a required tag and its default value if it is not specified by the user. Does not apply to resource groups.",
+    "displayName": "Apply tag and its default value",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/2a0e14a6-b0a6-4fab-991a-187a4f81c498",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": null,
+    "name": "2a0e14a6-b0a6-4fab-991a-187a4f81c498",
+    "parameters": {
+      "tagName": {
+        "metadata": {
+          "description": "Name of the tag, such as 'environment'",
+          "displayName": "Tag Name"
+        },
+        "type": "String"
+      },
+      "tagValue": {
+        "metadata": {
+          "description": "Value of the tag, such as 'production'",
+          "displayName": "Tag Value"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "exists": "false",
+        "field": "[concat('tags[', parameters('tagName'), ']')]"
+      },
+      "then": {
+        "details": [
+          {
+            "field": "[concat('tags[', parameters('tagName'), ']')]",
+            "value": "[parameters('tagValue')]"
+          }
+        ],
+        "effect": "append"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy deploys OMS VM Extensions on Ubuntu VMs, and connects to the selected Log Analytics workspace",
+    "displayName": "[Preview]: Deploy default OMS VM Extension for Ubuntu VMs.",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/3d8640fc-63f6-4734-8dcb-cfd3d8c78f38",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": "NotSpecified",
+    "name": "3d8640fc-63f6-4734-8dcb-cfd3d8c78f38",
+    "parameters": {
+      "logAnalytics": {
+        "metadata": {
+          "description": "Select Log Analytics workspace from dropdown list",
+          "displayName": "Log Analytics workspace",
+          "strongType": "omsWorkspace"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Compute/virtualMachines",
+            "field": "type"
+          },
+          {
+            "equals": "Canonical",
+            "field": "Microsoft.Compute/imagePublisher"
+          },
+          {
+            "equals": "UbuntuServer",
+            "field": "Microsoft.Compute/imageOffer"
+          },
+          {
+            "field": "Microsoft.Compute/imageSKU",
+            "in": [
+              "14.04.2-LTS",
+              "12.04.5-LTS"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "location": {
+                  "value": "[field('location')]"
+                },
+                "logAnalytics": {
+                  "value": "[parameters('logAnalytics')]"
+                },
+                "vmName": {
+                  "value": "[field('name')]"
+                }
+              },
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "outputs": {
+                  "policy": {
+                    "type": "string",
+                    "value": "[concat('Enabled monitoring for Linux VM', ': ', parameters('vmName'))]"
+                  }
+                },
+                "parameters": {
+                  "location": {
+                    "type": "string"
+                  },
+                  "logAnalytics": {
+                    "type": "string"
+                  },
+                  "vmName": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2017-12-01",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'),'/omsPolicy')]",
+                    "properties": {
+                      "autoUpgradeMinorVersion": true,
+                      "protectedSettings": {
+                        "workspaceKey": "[listKeys(parameters('logAnalytics'), '2015-03-20').primarySharedKey]"
+                      },
+                      "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                      "settings": {
+                        "workspaceId": "[reference(parameters('logAnalytics'), '2015-03-20').customerId]"
+                      },
+                      "type": "OmsAgentForLinux",
+                      "typeHandlerVersion": "1.4"
+                    },
+                    "type": "Microsoft.Compute/virtualMachines/extensions"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "OmsAgentForLinux",
+                "field": "Microsoft.Compute/virtualMachines/extensions/type"
+              },
+              {
+                "equals": "Microsoft.EnterpriseCloud.Monitoring",
+                "field": "Microsoft.Compute/virtualMachines/extensions/publisher"
+              }
+            ]
+          },
+          "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        "effect": "deployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Network Security Groups with too permissive rules will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor permissive network access in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/44452482-524f-4bf4-b852-0bff7cc4a3ed",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "44452482-524f-4bf4-b852-0bff7cc4a3ed",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines",
+          "Microsoft.Network/virtualNetworks",
+          "Microsoft.ClassicNetwork/virtualNetworks"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "permissiveNetworkAccess",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy ensures all SQL servers use version 12.0.",
+    "displayName": "Require SQL Server version 12.0",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf",
+    "metadata": {
+      "category": "SQL"
+    },
+    "mode": null,
+    "name": "464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Sql/servers",
+            "field": "type"
+          },
+          {
+            "not": {
+              "equals": "12.0",
+              "field": "Microsoft.Sql/servers/version"
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enforces usage of automatic OS upgrade with application health checks through health probes, which enables safer rollout by evaluating application health after each OS upgrade batch.",
+    "displayName": "Enforce automatic OS upgrade with app health checks on VMSS",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/465f0161-0087-490a-9ad9-ad6217f4f43a",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": "All",
+    "name": "465f0161-0087-490a-9ad9-ad6217f4f43a",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Compute/virtualMachineScaleSets",
+            "field": "type"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "equals": "True",
+                  "field": "Microsoft.Compute/VirtualMachineScaleSets/upgradePolicy.automaticOSUpgrade"
+                }
+              },
+              {
+                "exists": "False",
+                "field": "Microsoft.Compute/VirtualMachineScaleSets/networkProfile.healthProbe.id"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Possible Application Whitelist configuration will be monitored by Azure Security Center.",
+    "displayName": "[Preview]: Monitor possible app Whitelisting in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/47a6b606-51aa-4496-8bb7-64b11cf66adc",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "47a6b606-51aa-4496-8bb7-64b11cf66adc",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "applicationWhitelisting",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Applies a required tag and its default value to resource groups if it is not specified by the user.",
+    "displayName": "Apply tag and its default value to resource groups",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/49c88fc8-6fd1-46fd-a676-f12d1d3a4c71",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": "All",
+    "name": "49c88fc8-6fd1-46fd-a676-f12d1d3a4c71",
+    "parameters": {
+      "tagName": {
+        "metadata": {
+          "description": "Name of the tag, such as 'environment'",
+          "displayName": "Tag Name"
+        },
+        "type": "String"
+      },
+      "tagValue": {
+        "metadata": {
+          "description": "Value of the tag, such as 'production'",
+          "displayName": "Tag Value"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "exists": "false",
+            "field": "[concat('tags[', parameters('tagName'), ']')]"
+          },
+          {
+            "equals": "Microsoft.Resources/subscriptions/resourceGroups",
+            "field": "type"
+          }
+        ]
+      },
+      "then": {
+        "details": [
+          {
+            "field": "[concat('tags[', parameters('tagName'), ']')]",
+            "value": "[parameters('tagValue')]"
+          }
+        ],
+        "effect": "append"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: West India, South India, Central India",
+    "displayName": "Allow resource creation only in India data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/5ee85ce5-e7eb-44d6-b4a2-32a24be1ca54",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "5ee85ce5-e7eb-44d6-b4a2-32a24be1ca54",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "westindia",
+            "southindia",
+            "centralindia"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy audits storage accounts without blob encryption. It only applies to Microsoft.Storage resource types, not other storage providers.Possible network Just In Time access will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Audit missing blob encryption for storage accounts",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/655cb504-bcee-4362-bd4c-402e6aa38759",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "655cb504-bcee-4362-bd4c-402e6aa38759",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "Audit",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Storage/storageAccounts",
+            "field": "type"
+          },
+          {
+            "not": {
+              "equals": "True",
+              "field": "Microsoft.Storage/storageAccounts/enableBlobEncryption"
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to specify the resource types that your organization cannot deploy.",
+    "displayName": "Not allowed resource types",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/6c112d4e-5bc7-47ae-a041-ea2d9dccd749",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": null,
+    "name": "6c112d4e-5bc7-47ae-a041-ea2d9dccd749",
+    "parameters": {
+      "listOfResourceTypesNotAllowed": {
+        "metadata": {
+          "description": "The list of resource types that cannot be deployed.",
+          "displayName": "Not allowed resource types",
+          "strongType": "resourceTypes"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": "[parameters('listOfResourceTypesNotAllowed')]"
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: Japan East, Japan West",
+    "displayName": "Allow resource creation only in Japan data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/6fdb9205-3462-4cfc-87d8-16c7860b53f4",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "6fdb9205-3462-4cfc-87d8-16c7860b53f4",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "japaneast",
+            "japanwest"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to specify a set of storage account SKUs that your organization can deploy.",
+    "displayName": "Allowed storage account SKUs",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/7433c107-6db4-4ad1-b57a-a76dce0154a1",
+    "metadata": {
+      "category": "Storage"
+    },
+    "mode": null,
+    "name": "7433c107-6db4-4ad1-b57a-a76dce0154a1",
+    "parameters": {
+      "listOfAllowedSKUs": {
+        "metadata": {
+          "description": "The list of SKUs that can be specified for storage accounts.",
+          "displayName": "Allowed SKUs",
+          "strongType": "StorageSKUs"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Storage/storageAccounts",
+            "field": "type"
+          },
+          {
+            "not": {
+              "field": "Microsoft.Storage/storageAccounts/sku.name",
+              "in": "[parameters('listOfAllowedSKUs')]"
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Monitors vulnerabilities detected by Vulnerability Assessment solution and VMs without a Vulnerability Assessment solution in Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor VM Vulnerabilities in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/760a85ff-6162-42b3-8d70-698e268f648c",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "760a85ff-6162-42b3-8d70-698e268f648c",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "vulnerabilityAssessment",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy ensures blob encryption for storage accounts is turned on. It only applies to Microsoft.Storage resource types, not other storage providers.",
+    "displayName": "Require blob encryption for storage accounts",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/7c5a74bf-ae94-4a74-8fcf-644d1e0e6e6f",
+    "metadata": {
+      "category": "Storage"
+    },
+    "mode": null,
+    "name": "7c5a74bf-ae94-4a74-8fcf-644d1e0e6e6f",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Storage/storageAccounts",
+            "field": "type"
+          },
+          {
+            "equals": "false",
+            "field": "Microsoft.Storage/storageAccounts/enableBlobEncryption"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Audit diagnostic setting for selected resource types",
+    "displayName": "Audit diagnostic setting",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/7f89b1eb-583c-429a-8828-af049802c1d9",
+    "metadata": {
+      "category": "Monitoring"
+    },
+    "mode": "All",
+    "name": "7f89b1eb-583c-429a-8828-af049802c1d9",
+    "parameters": {
+      "listOfResourceTypes": {
+        "metadata": {
+          "displayName": "Resource Types",
+          "strongType": "resourceTypes"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": "[parameters('listOfResourceTypes')]"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "true",
+                "field": "Microsoft.Insights/diagnosticSettings/logs.enabled"
+              },
+              {
+                "equals": "true",
+                "field": "Microsoft.Insights/diagnosticSettings/metrics.enabled"
+              }
+            ]
+          },
+          "type": "Microsoft.Insights/diagnosticSettings"
+        },
+        "effect": "AuditIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Enables transparent data encryption on SQL databases",
+    "displayName": "Deploy SQL DB transparent data encryption",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/86a912f6-9a06-4e26-b447-11b16ba8659f",
+    "metadata": {
+      "category": "SQL"
+    },
+    "mode": "Indexed",
+    "name": "86a912f6-9a06-4e26-b447-11b16ba8659f",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Sql/servers/databases",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "fullDbName": {
+                  "value": "[field('fullName')]"
+                }
+              },
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                  "fullDbName": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2014-04-01",
+                    "name": "[concat(parameters('fullDbName'), '/current')]",
+                    "properties": {
+                      "status": "Enabled"
+                    },
+                    "type": "Microsoft.Sql/servers/databases/transparentDataEncryption"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "allOf": [
+              {
+                "equals": "Enabled",
+                "field": "Microsoft.Sql/transparentDataEncryption.status"
+              }
+            ]
+          },
+          "name": "current",
+          "type": "Microsoft.Sql/servers/databases/transparentDataEncryption"
+        },
+        "effect": "DeployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Missing security system updates on your servers will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor missing system updates in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/86b3d65f-7626-441e-b690-81a8b71cff60",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "86b3d65f-7626-441e-b690-81a8b71cff60",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines",
+          "Microsoft.OperationalInsights/workspaces"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "systemUpdates",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Enforces a required tag and its value on resource groups.",
+    "displayName": "Enforce tag and its value on resource groups",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/8ce3da23-7156-49e4-b145-24f95f9dcb46",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": "All",
+    "name": "8ce3da23-7156-49e4-b145-24f95f9dcb46",
+    "parameters": {
+      "tagName": {
+        "metadata": {
+          "description": "Name of the tag, such as 'environment'",
+          "displayName": "Tag Name"
+        },
+        "type": "String"
+      },
+      "tagValue": {
+        "metadata": {
+          "description": "Value of the tag, such as 'production'",
+          "displayName": "Tag Value"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "[concat('tags[', parameters('tagName'), ']')]",
+            "notEquals": "[parameters('tagValue')]"
+          },
+          {
+            "equals": "Microsoft.Resources/subscriptions/resourceGroups",
+            "field": "type"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: North Europe, West Europe",
+    "displayName": "Allow resource creation only in European data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/94c19f19-8192-48cd-a11b-e37099d3e36b",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "94c19f19-8192-48cd-a11b-e37099d3e36b",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "northeurope",
+            "westeurope"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: Central US, East US, East US2, North Central US, South Central US, West US",
+    "displayName": "Allow resource creation only in United States data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/983211ba-f348-4758-983b-21fa29294869",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "983211ba-f348-4758-983b-21fa29294869",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westus"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Network endpoints without a Next Generation Firewall's protection will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor unprotected network endpoints in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/9daedab3-fb2d-461e-b861-71790eead4f6",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "9daedab3-fb2d-461e-b861-71790eead4f6",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Network/publicIPAddresses",
+          "Microsoft.ClassicCompute/domainNames"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "unprotectedNetworkEndpoint",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to specify the resource types that your organization can deploy.",
+    "displayName": "Allowed resource types",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/a08ec900-254a-4555-9bf5-e42af04b5c5c",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": null,
+    "name": "a08ec900-254a-4555-9bf5-e42af04b5c5c",
+    "parameters": {
+      "listOfResourceTypesAllowed": {
+        "metadata": {
+          "description": "The list of resource types that can be deployed.",
+          "displayName": "Allowed resource types",
+          "strongType": "resourceTypes"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "type",
+          "in": "[parameters('listOfResourceTypesAllowed')]"
+        }
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Audits the existence of SQL Auditing at the server level",
+    "displayName": "Audit SQL server level Auditing settings",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/a6fb4358-5bf4-4ad7-ba82-2cd2f41ce5e9",
+    "metadata": {
+      "category": "SQL"
+    },
+    "mode": "NotSpecified",
+    "name": "a6fb4358-5bf4-4ad7-ba82-2cd2f41ce5e9",
+    "parameters": {
+      "setting": {
+        "allowedValues": [
+          "enabled",
+          "disabled"
+        ],
+        "metadata": {
+          "displayName": "Desired Auditing setting"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Sql/servers",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "[parameters('setting')]",
+            "field": "Microsoft.Sql/auditingSettings.state"
+          },
+          "name": "default",
+          "type": "Microsoft.Sql/servers/auditingSettings"
+        },
+        "effect": "AuditIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy ensures encryption is enabled on all DataLakeStore accounts",
+    "displayName": "Enforce encryption on DataLakeStore accounts",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/a7ff3161-0087-490a-9ad9-ad6217f4f43a",
+    "metadata": {
+      "category": "Data Lake"
+    },
+    "mode": "Indexed",
+    "name": "a7ff3161-0087-490a-9ad9-ad6217f4f43a",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.DataLakeStore/accounts",
+            "field": "type"
+          },
+          {
+            "equals": "Disabled",
+            "field": "Microsoft.DataLakeStore/accounts/encryptionState"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Unencrypted SQL servers or databases will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor unencrypted SQL database in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/a8bef009-a5c9-4d0f-90d7-6018734e8a16",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "a8bef009-a5c9-4d0f-90d7-6018734e8a16",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.SQL/servers",
+          "Microsoft.SQL/servers/databases"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "encryption",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy creates a network watcher resource in regions with virtual networks. You need to ensure existence of a resource group named networkWatcherRG, which will be used to deploy network watcher instances.",
+    "displayName": "[Preview]: Deploy network watcher when virtual networks are created",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/a9b99dd8-06c5-4317-8629-9d86a3c6e7d9",
+    "metadata": {
+      "category": "Network"
+    },
+    "mode": "Indexed",
+    "name": "a9b99dd8-06c5-4317-8629-9d86a3c6e7d9",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Network/virtualNetworks",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "location": {
+                  "value": "[field('location')]"
+                }
+              },
+              "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                  "location": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2016-09-01",
+                    "location": "[parameters('location')]",
+                    "name": "[concat('networkWacher_', parameters('location'))]",
+                    "type": "Microsoft.Network/networkWatchers"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "equals": "[field('location')]",
+            "field": "location"
+          },
+          "resourceGroupName": "networkWatcherRG",
+          "type": "Microsoft.Network/networkWatchers"
+        },
+        "effect": "DeployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Installs security agent on VMs for advanced security alerts and preventions in Azure Security Center. Applies only for subscriptions that use Azure Security Center.",
+    "displayName": "[Preview]: Automatic provisioning of security monitoring agent",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/abcc6037-1fc4-47f6-aac5-89706589be24",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "abcc6037-1fc4-47f6-aac5-89706589be24",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "securityAgent",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "AuditIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation if the 'environment' tag is set to one of the following values: production, dev, test, staging",
+    "displayName": "Allow resource creation if 'environment' tag value in allowed values",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/ac7e5fc0-c029-4b12-91d4-a8500ce697f9",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "ac7e5fc0-c029-4b12-91d4-a8500ce697f9",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "tags.environment",
+          "in": [
+            "production",
+            "dev",
+            "test",
+            "staging"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Servers without an installed Endpoint Protection agent will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor missing Endpoint Protection in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/af6cd1bd-1635-48cb-bde7-5b15693900b9",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "af6cd1bd-1635-48cb-bde7-5b15693900b9",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines",
+          "Microsoft.OperationalInsights/workspaces"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "endpointProtection",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "SQL servers and databases which doesn't have SQL auditing turned on will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor unaudited SQL database in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/af8051bf-258b-44e2-a2bf-165330459f9d",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "af8051bf-258b-44e2-a2bf-165330459f9d",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.SQL/servers",
+          "Microsoft.SQL/servers/databases"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "auditing",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Possible network Just In Time access will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor possible network JIT access in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/b0f33259-77d7-4c9e-aac6-3aabcfae693c",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "b0f33259-77d7-4c9e-aac6-3aabcfae693c",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Compute/virtualMachines",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "jitNetworkAccess",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: East Asia, Southeast Asia, West India, South India, Central India, Japan East, Japan West",
+    "displayName": "Allow resource creation only in Asia data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/c1b9cbed-08e3-427d-b9ce-7c535b1e9b94",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "c1b9cbed-08e3-427d-b9ce-7c535b1e9b94",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "eastasia",
+            "southeastasia",
+            "westindia",
+            "southindia",
+            "centralindia",
+            "japaneast",
+            "japanwest"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy automatically deploys diagnostic settings to network security groups.",
+    "displayName": "[Preview]: Apply Diagnostic Settings for Network Security Groups",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/c9c29499-c1d1-4195-99bd-2ec9e3a9dc89",
+    "metadata": {
+      "category": "Monitoring"
+    },
+    "mode": "Indexed",
+    "name": "c9c29499-c1d1-4195-99bd-2ec9e3a9dc89",
+    "parameters": {
+      "rgName": {
+        "metadata": {
+          "description": "This resource group must already exist.",
+          "displayName": "Resource Group Name for Storage Account (must exist)",
+          "strongType": "ExistingResourceGroups"
+        },
+        "type": "String"
+      },
+      "storagePrefix": {
+        "metadata": {
+          "displayName": "Storage Account Prefix for Regional Storage Account"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Network/networkSecurityGroups",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "location": {
+                  "value": "[field('location')]"
+                },
+                "nsgName": {
+                  "value": "[field('name')]"
+                },
+                "rgName": {
+                  "value": "[parameters('rgName')]"
+                },
+                "storagePrefix": {
+                  "value": "[parameters('storagePrefix')]"
+                }
+              },
+              "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                  "location": {
+                    "type": "string"
+                  },
+                  "nsgName": {
+                    "type": "string"
+                  },
+                  "rgName": {
+                    "type": "string"
+                  },
+                  "storagePrefix": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2017-05-01-preview",
+                    "dependsOn": [
+                      "deployStorageAccount"
+                    ],
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('nsgName'),'/Microsoft.Insights/setbypolicy')]",
+                    "properties": {
+                      "logs": [
+                        {
+                          "category": "NetworkSecurityGroupEvent",
+                          "enabled": true,
+                          "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                          }
+                        },
+                        {
+                          "category": "NetworkSecurityGroupRuleCounter",
+                          "enabled": true,
+                          "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                          }
+                        }
+                      ],
+                      "storageAccountId": "[reference('deployStorageAccount').outputs.storageAccountId.value]"
+                    },
+                    "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticSettings"
+                  },
+                  {
+                    "apiVersion": "2017-05-10",
+                    "name": "deployStorageAccount",
+                    "properties": {
+                      "mode": "incremental",
+                      "parameters": {
+                        "location": {
+                          "value": "[parameters('location')]"
+                        },
+                        "storagePrefix": {
+                          "value": "[parameters('storagePrefix')]"
+                        }
+                      },
+                      "template": {
+                        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+                        "contentVersion": "1.0.0.0",
+                        "outputs": {
+                          "storageAccountId": {
+                            "type": "string",
+                            "value": "[resourceId('Microsoft.Storage/storageAccounts',concat(parameters('storagePrefix'), parameters('location')))]"
+                          }
+                        },
+                        "parameters": {
+                          "location": {
+                            "type": "string"
+                          },
+                          "storagePrefix": {
+                            "type": "string"
+                          }
+                        },
+                        "resources": [
+                          {
+                            "apiVersion": "2017-06-01",
+                            "kind": "Storage",
+                            "location": "[parameters('location')]",
+                            "name": "[concat(parameters('storageprefix'), parameters('location'))]",
+                            "properties": {
+                              "networkAcls": {
+                                "bypass": "AzureServices",
+                                "defaultAction": "Allow",
+                                "ipRules": [],
+                                "virtualNetworkRules": []
+                              },
+                              "supportsHttpsTrafficOnly": false
+                            },
+                            "scale": null,
+                            "sku": {
+                              "name": "Standard_LRS",
+                              "tier": "Standard"
+                            },
+                            "tags": {
+                              "created-by": "policy"
+                            },
+                            "type": "Microsoft.Storage/storageAccounts"
+                          }
+                        ]
+                      }
+                    },
+                    "resourceGroup": "[parameters('rgName')]",
+                    "type": "Microsoft.Resources/deployments"
+                  }
+                ]
+              }
+            }
+          },
+          "existenceCondition": {
+            "field": "name",
+            "notlike": "*"
+          },
+          "name": "setbypolicy",
+          "type": "Microsoft.Insights/diagnosticSettings"
+        },
+        "effect": "DeployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to specify a set of virtual machine SKUs that your organization can deploy.",
+    "displayName": "Allowed virtual machine SKUs",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/cccc23c7-8427-4f53-ad12-b6a63eb452b3",
+    "metadata": {
+      "category": "Compute"
+    },
+    "mode": null,
+    "name": "cccc23c7-8427-4f53-ad12-b6a63eb452b3",
+    "parameters": {
+      "listOfAllowedSKUs": {
+        "metadata": {
+          "description": "The list of SKUs that can be specified for virtual machines.",
+          "displayName": "Allowed SKUs",
+          "strongType": "VMSKUs"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "equals": "Microsoft.Compute/virtualMachines",
+            "field": "type"
+          },
+          {
+            "not": {
+              "field": "Microsoft.Compute/virtualMachines/sku.name",
+              "in": "[parameters('listOfAllowedSKUs')]"
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation only if the 'department' tag is set",
+    "displayName": "Allow resource creation if 'department' tag set",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/cd8dc879-a2ae-43c3-8211-1877c5755064",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "cd8dc879-a2ae-43c3-8211-1877c5755064",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "containsKey": "department",
+          "field": "tags"
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Allows resource creation in the following locations only: Japan East, Japan West",
+    "displayName": "Allow resource creation only in Japan data centers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/e01598e8-6538-41ed-95e8-8b29746cd697",
+    "metadata": {
+      "category": "General",
+      "deprecated": true
+    },
+    "mode": null,
+    "name": "e01598e8-6538-41ed-95e8-8b29746cd697",
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": [
+            "japaneast",
+            "japanwest"
+          ]
+        }
+      },
+      "then": {
+        "effect": "Deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Servers which do not satisfy the configured baseline will be monitored by Azure Security Center as recommendations.",
+    "displayName": "[Preview]: Monitor OS vulnerabilities in Security Center",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/e1e5fd5d-3e4c-4ce1-8661-7d1873ae6b15",
+    "metadata": {
+      "category": "Security Center",
+      "preview": true
+    },
+    "mode": "All",
+    "name": "e1e5fd5d-3e4c-4ce1-8661-7d1873ae6b15",
+    "parameters": {
+      "effect": {
+        "allowedValues": [
+          "AuditIfNotExists",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Enable or disable the execution of the policy",
+          "displayName": "Effect"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "field": "type",
+        "in": [
+          "Microsoft.Compute/virtualMachines",
+          "Microsoft.ClassicCompute/virtualMachines",
+          "Microsoft.OperationalInsights/workspaces"
+        ]
+      },
+      "then": {
+        "details": {
+          "existenceCondition": {
+            "equals": "Monitored",
+            "field": "Microsoft.Security/complianceResults/resourceStatus"
+          },
+          "name": "osVulnerabilities",
+          "type": "Microsoft.Security/complianceResults"
+        },
+        "effect": "[parameters('effect')]"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to restrict the locations your organization can specify when deploying resources. Use to enforce your geo-compliance requirements. Excludes resource groups, Microsoft.AzureActiveDirectory/b2cDirectories, and resources that use the 'global' region.",
+    "displayName": "Allowed locations",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": null,
+    "name": "e56962a6-4747-49cd-b67b-bf8b01975c4c",
+    "parameters": {
+      "listOfAllowedLocations": {
+        "metadata": {
+          "description": "The list of locations that can be specified when deploying resources.",
+          "displayName": "Allowed locations",
+          "strongType": "location"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "location",
+            "notIn": "[parameters('listOfAllowedLocations')]"
+          },
+          {
+            "field": "location",
+            "notEquals": "global"
+          },
+          {
+            "field": "type",
+            "notEquals": "Microsoft.AzureActiveDirectory/b2cDirectories"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy enables you to restrict the locations your organization can create resource groups in. Use to enforce your geo-compliance requirements.",
+    "displayName": "Allowed locations for resource groups",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/e765b5de-1225-4ba3-bd56-1ac6695af988",
+    "metadata": {
+      "category": "General"
+    },
+    "mode": "All",
+    "name": "e765b5de-1225-4ba3-bd56-1ac6695af988",
+    "parameters": {
+      "listOfAllowedLocations": {
+        "metadata": {
+          "description": "The list of locations that resource groups can be created in.",
+          "displayName": "Allowed locations",
+          "strongType": "location"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "location",
+            "notIn": "[parameters('listOfAllowedLocations')]"
+          },
+          {
+            "equals": "Microsoft.Resources/subscriptions/resourceGroups",
+            "field": "type"
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "This policy ensures that Auditing is enabled on SQL Servers for enhanced security & compliance. It will automatically create a storage account in the same region as the SQL server to store audit records.",
+    "displayName": "[Preview]: Deploy Auditing on SQL servers",
+    "id": "/providers/Microsoft.Authorization/policyDefinitions/f4c68484-132f-41f9-9b6d-3e4b1cb55036",
+    "metadata": {
+      "category": "SQL"
+    },
+    "mode": "Indexed",
+    "name": "f4c68484-132f-41f9-9b6d-3e4b1cb55036",
+    "parameters": {
+      "retentionDays": {
+        "metadata": {
+          "description": "The value in days of the retention period (0 indicates unlimited retention)",
+          "displayName": "Retention days (optional, 180 days if unspecified)"
+        },
+        "type": "String"
+      },
+      "storageAccountsResourceGroup": {
+        "metadata": {
+          "description": "Auditing writes database events to an audit log in your Azure Storage account (a storage account will be created in each region where a SQL Server is created that will be shared by all servers in that region). Important - for proper operation of Auditing do not delete or rename the resource group or the storage accounts.",
+          "displayName": "Resource group name for storage accounts",
+          "strongType": "existingResourceGroups"
+        },
+        "type": "String"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "equals": "Microsoft.Sql/servers",
+        "field": "type"
+      },
+      "then": {
+        "details": {
+          "deployment": {
+            "properties": {
+              "mode": "incremental",
+              "parameters": {
+                "auditRetentionDays": {
+                  "value": "[parameters('retentionDays')]"
+                },
+                "location": {
+                  "value": "[field('location')]"
+                },
+                "serverName": {
+                  "value": "[field('name')]"
+                },
+                "storageAccountsResourceGroup": {
+                  "value": "[parameters('storageAccountsResourceGroup')]"
+                }
+              },
+              "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                  "auditRetentionDays": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "serverName": {
+                    "type": "string"
+                  },
+                  "storageAccountsResourceGroup": {
+                    "type": "string"
+                  }
+                },
+                "resources": [
+                  {
+                    "apiVersion": "2017-05-10",
+                    "name": "[variables('createStorageAccountDeploymentName')]",
+                    "properties": {
+                      "mode": "Incremental",
+                      "parameters": {
+                        "location": {
+                          "value": "[parameters('location')]"
+                        },
+                        "storageName": {
+                          "value": "[variables('storageName')]"
+                        }
+                      },
+                      "templateLink": {
+                        "contentVersion": "1.0.0.0",
+                        "uri": "https://raw.githubusercontent.com/Azure/azure-policy/master/samples/SQL/deploy-sql-server-auditing/createStorage.template.json"
+                      }
+                    },
+                    "resourceGroup": "[parameters('storageAccountsResourceGroup')]",
+                    "type": "Microsoft.Resources/deployments"
+                  },
+                  {
+                    "apiVersion": "2017-03-01-preview",
+                    "name": "[concat(parameters('serverName'), '/Default')]",
+                    "properties": {
+                      "auditActionsAndGroups": null,
+                      "isStorageSecondaryKeyInUse": false,
+                      "retentionDays": "[variables('retentionDays')]",
+                      "state": "Enabled",
+                      "storageAccountAccessKey": "[reference(variables('createStorageAccountDeploymentName')).outputs.storageAccountKey.value]",
+                      "storageAccountSubscriptionId": "[subscription().subscriptionId]",
+                      "storageEndpoint": "[reference(variables('createStorageAccountDeploymentName')).outputs.storageAccountEndPoint.value]"
+                    },
+                    "type": "Microsoft.Sql/servers/auditingSettings"
+                  }
+                ],
+                "variables": {
+                  "createStorageAccountDeploymentName": "[concat('sqlServerAuditingStorageAccount-', variables('locationCode'))]",
+                  "locationCode": "[substring(parameters('location'), 0, 3)]",
+                  "retentionDays": "[int(parameters('auditRetentionDays'))]",
+                  "storageName": "[tolower(concat('sqlaudit', variables('locationCode'), variables('uniqueStorage')))]",
+                  "subscriptionId": "[subscription().subscriptionId]",
+                  "uniqueStorage": "[uniqueString(variables('subscriptionId'), parameters('location'), parameters('storageAccountsResourceGroup'))]"
+                }
+              }
+            }
+          },
+          "existenceCondition": {
+            "equals": "Enabled",
+            "field": "Microsoft.Sql/auditingSettings.state"
+          },
+          "name": "Default",
+          "type": "Microsoft.Sql/servers/auditingSettings"
+        },
+        "effect": "DeployIfNotExists"
+      }
+    },
+    "policyType": "BuiltIn",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  },
+  {
+    "description": "Restrict resource types that can be deployed",
+    "displayName": "Restrict resource types",
+    "id": "/subscriptions/2738970e-97b9-4069-ac9f-cfc3e193fa53/providers/Microsoft.Authorization/policyDefinitions/restrict_resource_types",
+    "metadata": null,
+    "mode": "All",
+    "name": "restrict_resource_types",
+    "parameters": {
+      "listOfResourceTypesAllowed": {
+        "metadata": {
+          "description": "The list of resource types that can be deployed.",
+          "displayName": "Allowed resource types",
+          "strongType": "resourceTypes"
+        },
+        "type": "Array"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "type",
+          "in": "[parameters('listOfResourceTypesAllowed')]"
+        }
+      },
+      "then": {
+        "effect": "deny"
+      }
+    },
+    "policyType": "Custom",
+    "type": "Microsoft.Authorization/policyDefinitions"
+  }
+]
