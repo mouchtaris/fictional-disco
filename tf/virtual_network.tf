@@ -12,5 +12,5 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name = "${azurerm_virtual_network.vnet.name}"
 
   name = "subnet${count.index}"
-  address_prefix = "${cidrhost(azurerm_virtual_network.vnet.address_space[0], count.index)}"
+  address_prefix = "${cidrsubnet(azurerm_virtual_network.vnet.address_space[0], ceil(log(var.subnets, 2)), count.index)}"
 }
