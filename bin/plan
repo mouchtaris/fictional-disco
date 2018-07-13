@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+terraform plan \
+  -var-file=input.tfvars \
+  -out=plan.tfplan \
+  tf
