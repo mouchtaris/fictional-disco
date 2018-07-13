@@ -18,7 +18,7 @@
 ## Assumptions
 
 * Storage account replication type: no information is provided for the assignment, so the simplest, cheapest method
-  is chose (Local Redundant Storage).
+  is chosen (Local Redundant Storage).
 * Restriction policies:
   * It is assumed that *all* resources under compute, network and storage are allowed
   * It is assumed that the *current* available resources are allowed
