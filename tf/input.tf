@@ -12,3 +12,8 @@ variable "subnets" {
   description = "Number of subnets in the virtual network -- NOTICE: the number of subnets should be possible given the network address space"
   type = "string"
 }
+
+variable "group_tags" {
+  description = "A map of tags to be applied to the resource group"
+  type = "map"
+}
